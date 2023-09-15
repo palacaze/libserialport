@@ -127,6 +127,24 @@ install(
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}"
 )
 
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/${CMAKE_PROJECT_NAME}Config.cmake.in"
+    "${PROJECT_BINARY_DIR}/${CMAKE_PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}"
+)
+
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/${CMAKE_PROJECT_NAME}ConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY ExactVersion
+)
+
+install(
+    FILES "${PROJECT_BINARY_DIR}/${CMAKE_PROJECT_NAME}Config.cmake"
+          "${PROJECT_BINARY_DIR}/${CMAKE_PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}"
+)
+
 export(
     TARGETS ${CMAKE_PROJECT_NAME}
     NAMESPACE ${CMAKE_PROJECT_NAME}::
