@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+#include "libserialport_export.h"
 
 /* clock_gettime is available. */
 #cmakedefine HAVE_CLOCK_GETTIME @HAVE_CLOCK_GETTIME@
@@ -80,22 +80,19 @@
 #undef PACKAGE_BUGREPORT
 
 /* Define to the full name of this package. */
-#undef PACKAGE_NAME
+#define PACKAGE_NAME "libserialport"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#define PACKAGE_STRING "@CMAKE_PROJECT_NAME@ @SP_PACKAGE_VERSION_STRING@"
 
 /* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+#define PACKAGE_TARNAME "libserialport"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL "http://sigrok.org/wiki/Libserialport"
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "@SP_PACKAGE_VERSION_STRING@"
-
-/* Macro preceding public API functions */
-#define SP_API @SP_API@
 
 /* . */
 #define SP_LIB_VERSION_AGE @SP_LIB_VERSION_AGE@
@@ -121,11 +118,8 @@
 /* . */
 #define SP_PACKAGE_VERSION_STRING "@SP_PACKAGE_VERSION_STRING@"
 
-/* Macro preceding private functions */
-#define SP_PRIV @SP_PRIV@
-
 /* Define to 1 if you have the ANSI C header files. */
-#undef STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE

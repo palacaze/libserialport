@@ -276,6 +276,7 @@
 extern "C" {
 #endif
 
+#include <libserialport_export.h>
 #include <stddef.h>
 
 /** @cond */

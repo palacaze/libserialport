@@ -1,34 +1,17 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(libserialport LANGUAGES C)
+project(libserialport VERSION 0.1.1 LANGUAGES C)
 
-if(UNIX AND NOT APPLE)
-    set(SOURCES serialport.c linux.c linux_termios.c timing.c)
-elseif(APPLE)
-    set(SOURCES serialport.c macosx.c timing.c)
-elseif(WIN32)
-    set(SOURCES serialport.c windows.c timing.c)
-endif()
-
-set(HEADERS config.h)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
-
-add_library(libserialport ${SOURCES} ${HEADERS})
-
-set(SP_PACKAGE_VERSION_MAJOR 0)
-set(SP_PACKAGE_VERSION_MINOR 1)
-set(SP_PACKAGE_VERSION_MICRO 1)
-set(SP_PACKAGE_VERSION_STRING "${SP_PACKAGE_VERSION_MAJOR}.${SP_PACKAGE_VERSION_MINOR}.${SP_PACKAGE_VERSION_MICRO}")
-message("Serialport package version: " ${SP_PACKAGE_VERSION_STRING})
+set(SP_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(SP_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(SP_PACKAGE_VERSION_MICRO ${PROJECT_VERSION_PATCH})
+set(SP_PACKAGE_VERSION_STRING "${PROJECT_VERSION}")
 
 set(SP_LIB_VERSION_CURRENT 1)
 set(SP_LIB_VERSION_REVISION 0)
 set(SP_LIB_VERSION_AGE 1)
 set(SP_LIB_VERSION_STRING "${SP_LIB_VERSION_CURRENT}:${SP_LIB_VERSION_REVISION}:${SP_LIB_VERSION_AGE}")
 set(SP_LIB_VERSION_STRING_CLEAN "${SP_LIB_VERSION_CURRENT}.${SP_LIB_VERSION_REVISION}.${SP_LIB_VERSION_AGE}")
-message("Serialport lib version: " ${SP_LIB_VERSION_STRING})
 
 ### configure config.h
 
@@ -40,91 +23,112 @@ include(CheckStructHasMember)
 check_symbol_exists(clock_gettime "time.h" HAVE_CLOCK_GETTIME)
 
 check_type_size("BOTHER" BOTHER_SIZE)
-if(BOTHER_SIZE)
-        set(HAVE_DECL_BOTHER 1)
+if (BOTHER_SIZE)
+    set(HAVE_DECL_BOTHER 1)
 endif()
 
-CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DLFCN_H)
-
-
-CHECK_INCLUDE_FILE("sys/file.h" HAVE_SYS_FILE_H)
+check_include_file("dlfcn.h" HAVE_DLFCN_H)
+check_include_file("sys/file.h" HAVE_SYS_FILE_H)
 check_symbol_exists(flock "sys/file.h" HAVE_FLOCK)
-
 check_symbol_exists(realpath "stdlib.h" HAVE_REALPATH)
-
-CHECK_INCLUDE_FILE("inttypes.h" HAVE_INTTYPES_H)
-CHECK_INCLUDE_FILE("memory.h" HAVE_MEMORY_H)
-
-CHECK_INCLUDE_FILE("sys/stat.h" HAVE_SYS_STAT_H)
-CHECK_INCLUDE_FILE("sys/types.h" HAVE_SYS_TYPES_H)
-CHECK_INCLUDE_FILE("unistd.h" HAVE_UNISTD_H)
-
-CHECK_INCLUDE_FILE("stdlib.h" HAVE_STDLIB_H)
-CHECK_INCLUDE_FILE("strings.h" HAVE_STRINGS_H)
-CHECK_INCLUDE_FILE("string.h" HAVE_STRING_H)
+check_include_file("inttypes.h" HAVE_INTTYPES_H)
+check_include_file("memory.h" HAVE_MEMORY_H)
+check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
+check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
+check_include_file("unistd.h" HAVE_UNISTD_H)
+check_include_file("stdlib.h" HAVE_STDLIB_H)
+check_include_file("strings.h" HAVE_STRINGS_H)
+check_include_file("string.h" HAVE_STRING_H)
 
 check_struct_has_member("struct termios" c_ispeed linux/termios.h HAVE_STRUCT_TERMIOS_C_ISPEED LANGUAGE C)
 check_struct_has_member("struct termios" c_ospeed linux/termios.h HAVE_STRUCT_TERMIOS_C_OSPEED LANGUAGE C)
 
 set(CMAKE_EXTRA_INCLUDE_FILES linux/termios.h)
 check_type_size("struct termios2" TERMIOS2_SIZE)
-if(TERMIOS2_SIZE)
-	set(HAVE_STRUCT_TERMIOS2 1)
-	check_struct_has_member("struct termios2" c_ispeed linux/termios.h HAVE_STRUCT_TERMIOS2_C_ISPEED LANGUAGE C)
-	check_struct_has_member("struct termios2" c_ospeed linux/termios.h HAVE_STRUCT_TERMIOS2_C_OSPEED LANGUAGE C)
+if (TERMIOS2_SIZE)
+    set(HAVE_STRUCT_TERMIOS2 1)
+    check_struct_has_member("struct termios2" c_ispeed linux/termios.h HAVE_STRUCT_TERMIOS2_C_ISPEED LANGUAGE C)
+    check_struct_has_member("struct termios2" c_ospeed linux/termios.h HAVE_STRUCT_TERMIOS2_C_OSPEED LANGUAGE C)
 endif()
 
 check_type_size("struct termiox" TERMIOX_SIZE)
-if(TERMIOX_SIZE)
-	set(HAVE_STRUCT_TERMIOX 1)
+if (TERMIOX_SIZE)
+    set(HAVE_STRUCT_TERMIOX 1)
 endif()
 
 set(CMAKE_EXTRA_INCLUDE_FILES linux/serial.h)
 check_type_size("struct serial_struct" SERIAL_STRUCT_SIZE)
-if(SERIAL_STRUCT_SIZE)
-	set(HAVE_STRUCT_SERIAL_STRUCT 1)
+if (SERIAL_STRUCT_SIZE)
+    set(HAVE_STRUCT_SERIAL_STRUCT 1)
 endif()
 
-if(NOT WIN32)
-    set(SP_API  "__attribute__((visibility(\"default\")))" )
-    set(SP_PRIV "__attribute__((visibility(\"hidden\")))" )
-else()
-    set(SP_API  "__declspec(dllexport)")
-    set(SP_PRIV "")
+configure_file(cmake.config.h.in config.h)
+
+### Library
+
+include(GenerateExportHeader)
+
+add_library(libserialport config.h serialport.c timing.c)
+add_library(libserialport::libserialport ALIAS libserialport)
+
+if (UNIX)
+    target_sources(libserialport PRIVATE linux.c linux_termios.c)
+elseif (WIN32)
+    target_sources(libserialport PRIVATE windows.c)
 endif()
 
-configure_file(cmake.config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
-#this define is needed for config.h inclusion
-target_compile_options(libserialport PRIVATE -DLIBSERIALPORT_ATBUILD)
+generate_export_header(libserialport
+    BASE_NAME libserialport
+    EXPORT_MACRO_NAME SP_API
+    NO_EXPORT_MACRO_NAME SP_PRIV
+    EXPORT_FILE_NAME libserialport_export.h
+    STATIC_DEFINE LIBSERIALPORT_STATIC_BUILD
+)
 
-#set properties
+target_include_directories(libserialport
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include>
+)
 
-if(APPLE)
-    find_library(IOKIT IOKit)
-    find_library(FOUNDATION Foundation)
-    target_link_libraries(libserialport ${IOKIT} ${FOUNDATION})
-elseif(WIN32)
-    target_link_libraries(libserialport setupapi)
+# this define is needed for config.h inclusion
+target_compile_definitions(libserialport PRIVATE LIBSERIALPORT_ATBUILD)
+
+if (WIN32)
+    target_link_libraries(libserialport PRIVATE setupapi)
 endif()
 
-
-set_target_properties(libserialport PROPERTIES PUBLIC_HEADER "libserialport.h")
+set_target_properties(libserialport PROPERTIES PUBLIC_HEADER "${CMAKE_CURRENT_BINARY_DIR}/libserialport_export.h")
+set_target_properties(libserialport PROPERTIES PUBLIC_HEADER libserialport.h)
 set_target_properties(libserialport PROPERTIES VERSION ${SP_PACKAGE_VERSION_STRING})
 set_target_properties(libserialport PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(libserialport PROPERTIES OUTPUT_NAME "serialport")
 
-#prevent liblibserialport.so
-set_target_properties(libserialport PROPERTIES OUTPUT_NAME "serialport") 
+### Installation
 
-install(TARGETS libserialport)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-install(TARGETS libserialport
-    EXPORT libserialport-config
-    )
+install(
+    TARGETS libserialport
+    EXPORT ${CMAKE_PROJECT_NAME}Targets
+)
 
-export(TARGETS libserialport
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/libdi2-config.cmake"
-    )
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/libserialport_export.h
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
 
-install(EXPORT libserialport-config
+install(
+    EXPORT ${CMAKE_PROJECT_NAME}Targets
+    FILE ${CMAKE_PROJECT_NAME}Targets.cmake
+    NAMESPACE ${CMAKE_PROJECT_NAME}::
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME}"
-    )
+)
+
+export(
+    TARGETS ${CMAKE_PROJECT_NAME}
+    NAMESPACE ${CMAKE_PROJECT_NAME}::
+    FILE ${CMAKE_PROJECT_NAME}Targets.cmake
+)
